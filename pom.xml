@@ -24,27 +24,47 @@
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>3.2.0</version>
 			</plugin>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
-				<configuration>
-					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${app.runtime}</muleVersion>
-						<username>${anypoint.username}</username>
-						<password>${anypoint.password}</password>
-						<applicationName>${app.name}</applicationName>
-						<environment>${env}</environment>
-						<workerType>MICRO</workerType>
-						<region>us-east-2</region>
-						<workers>1</workers>
-						<objectStoreV2>true</objectStoreV2>
-					</cloudHubDeployment>
-					<classifier>mule-application</classifier>
-				</configuration>
-			</plugin>
+		   <plugin>
+		    <groupId>org.mule.tools.maven</groupId>
+		    <artifactId>mule-maven-plugin</artifactId>
+		    <version>${mule.maven.plugin.version}</version>
+		    <extensions>true</extensions>
+		    <configuration>
+		     <runtimefabricdeployment>
+		      <uri>${anypoint.uri}</uri>
+		      <provider>${anypoint.provider}</provider>
+		      <environment>${deployment.environment}</environment>
+		      <target>${deployment.target}</target>
+		      <muleversion>${app.runtime}</muleversion>
+		      <server>ExchangeRepository</server>
+		      <applicationname>${app.name}</applicationname>
+		      <deploymentsettings>
+		       <replicationfactor>${deployment.replica}</replicationfactor>
+		       <cpureserved>${app.cores}</cpureserved>
+		       <memoryreserved>${app.memory}</memoryreserved>
+		      </deploymentsettings>
+		     </runtimefabricdeployment>
+		     <classifier>mule-application</classifier>
+		    </configuration>
+		   </plugin>
+		   <plugin>
+		    <groupId>org.codehaus.mojo</groupId>
+		    <artifactId>properties-maven-plugin</artifactId>
+		    <version>1.0.0</version>
+		    <executions>
+		     <execution>
+		      <phase>initialize</phase>
+		      <goals>
+		       <goal>read-project-properties</goal>
+		      </goals>
+		      <configuration>
+		       <files>
+		        <file>${maven.properties}</file>
+		       </files>
+		      </configuration>
+		     </execution>
+		    </executions>
+		   </plugin>
 		</plugins>
 	</build>
 
