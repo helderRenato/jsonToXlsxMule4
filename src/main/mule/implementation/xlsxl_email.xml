@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	
+	
+	
+	
+	<flow name="xlsxl_emailFlow" doc:id="5a4d37ed-8437-494f-b08e-5f204825dc26" >
+		<email:listener-imap doc:name="On New Email - IMAP" doc:id="38e5896d-954a-4a64-92e0-47f15f6653f9" config-ref="Email_IMAP" imapMatcher="Imap_matcher">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</email:listener-imap>
+		<logger level="INFO" doc:name="Logger" doc:id="60549411-dfb7-4c3c-9763-f0d60e2858d0" message='RECEBI O EMAIL'/>
+		<ee:transform doc:name="set payload to attachment" doc:id="7f5b4b5f-0742-4e89-bbcc-8a9fe494f777">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if(isEmpty(payload.attachments[0]))
+	""
+else
+	payload.attachments[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="4cc93039-d6bd-4767-b088-11d1c6bd26f9" >
+			<when expression="#[isEmpty(payload)]">
+				<ee:transform doc:name="Transform Message" doc:id="1133d9c9-ea9b-4605-9b62-c1976063f21d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"message": "No Attachment"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="a4c9328d-c26f-4990-a0de-8fc3ed7b3165" message="NO ATTACHMENT"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="xlsx to json" doc:id="c90e3e79-af7f-467d-a766-afcf715409a3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.5
+output application/json
+
+import repeat from  dw::core::Strings
+
+//Encontrar a palavra expediente no payload
+fun getExpedienteIndex (array: Array) = (
+    //encontrar a palavra expediente
+    getFilteredPayload(array) map ((item, index) -> 
+                    item.B == "Expediente"
+        ) find true )[0]
+
+//Verificar se o objeto contem algum vazio
+fun doesObjactContainsEmptys(object: Object) = 
+    object mapObject ((value, key, index) -> 
+                if((isEmpty(value)) and ("$key" != "A"))  
+                    key: true
+                else 
+                    key: false
+            ) pluck $ 
+//filtrar o payload para nao conter {}
+fun getFilteredPayload(array: Array) = 
+    array map ((item) -> 
+                if((doesObjactContainsEmptys(item) contains true) or sizeOf(doesObjactContainsEmptys(item)) != 14) 
+                    {}
+                else 
+                    item
+            ) filter ((item) -> !(isEmpty(item)))
+//analisar o numero do comercio
+fun filterComercio(comercioNumber: String) = 
+    if(sizeOf(comercioNumber) == 9)  
+        comercioNumber
+    else 
+        //retornar o numero com a quantidade de zeros que faltam
+        repeat("0", 9 - sizeOf(comercioNumber)) ++ comercioNumber 
+
+---
+
+//Buscar apenas as linhas essenciais do excel
+getFilteredPayload(payload."Cargos a Comercio")[getExpedienteIndex(payload."Cargos a Comercio") + 1 to -1]
+    //Criar o objecto formatado     
+    map ((item) -> {
+                "Expediente": item.B,
+                "Comércio": filterComercio(item.C),
+                "Nome Comércio": item.D,
+                "Tarjeta": item.E,
+                "Importe retrocesso": item.F,
+                "Descrição": item.G,
+                "Data": item.H,
+                "Ref.Operação": item.I,
+                "Tipo incidência": item.J,
+                "Número": item.K,
+                "Importe operação": item.L,
+                "Descrição": item.M,
+                "Idioma requerido": item.N
+            })
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="Logger1" doc:id="44680bcb-600b-4e87-b3dd-14a365b2173c" message="EMAIL CONVERTIDO" />
+				<file:write doc:name="Write" doc:id="b9bceb0e-e917-48a4-86b3-abfac432ab7f" path="${file.path}/jason.json" />
+				<logger level="INFO" doc:name="Logger2" doc:id="f2e7175f-b52f-4bb8-b34b-5198e78ab7db" message="FICHEIRO JSON CRIADO" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="xlsxl_emailFlow1" doc:id="944e52f6-90ea-472e-84e4-2a2b6f760fdb" >
+		<file:listener doc:name="On New or Updated File" doc:id="9829d6d7-22d2-4a30-a1c8-d2778cc377cf" config-ref="File_Config" watermarkMode="MODIFIED_TIMESTAMP" directory="${file.path}">
+			<reconnect-forever />
+			<scheduling-strategy >
+				<fixed-frequency startDelay="1000"/>
+			</scheduling-strategy>
+		</file:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="20b0b64c-4c19-4d1b-aca6-f790435b1c6e" message="EMAIL NA PASTA LOCAL CRIADO OU ATUALIZADO"/>
+		<ee:transform doc:name="Json To Xlsx" doc:id="5009e8e7-96bc-4c94-94a5-889020784b09" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xlsx header=true
+---
+{
+    excel: payload map {
+        "Expediente": $."Expediente", 
+        "Comércio": $."Comércio",
+        "Nome Comércio": $."Nome Comércio",
+        "Tarjeta": $."Tarjeta",
+        "Importe retrocesso": $."Importe retrocesso",
+        "Descrição":  $."Descrição",
+        "Data": $."Data",
+        "Ref.Operação": $."Ref.Operação",
+        "Tipo incidência": $."Tipo incidência",
+        "Número": $."Número",
+        "Importe operação": $."Importe operação",
+        "Descrição": $."Descrição",
+        "Idioma requerido": $."Idioma requerido"
+    }   
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="83ba9b23-e8e3-445b-a51c-203dbb263f88" name="SEND_EMAIL"/>
+	</flow>
+	<sub-flow name="SEND_EMAIL" doc:id="51f636c2-859e-4024-aed1-bc85616b34f9" >
+		<email:send doc:name="Send" doc:id="20ed0f70-5358-4d5c-83d8-9125a65d275e" config-ref="Email_SMTP" fromAddress="t78364306@gmail.com" subject="FORMATTED EXCEL">
+			<email:to-addresses >
+				<email:to-address value="t78364306@gmail.com" />
+			</email:to-addresses>
+			<email:body >
+				<email:content ><![CDATA[MULESOFT EXERCISE]]></email:content>
+			</email:body>
+			<email:attachments ><![CDATA[#["formattedExcel.xlsx": payload]]]></email:attachments>
+		</email:send>
+		<logger level="INFO" doc:name="Logger1" doc:id="93ee76b9-23b4-4208-b4df-46cfe9ff5d31" message="EXCEL ENVIADO PARA O EMAIL DO DESTINATARIO" />
+	</sub-flow>
+</mule>
