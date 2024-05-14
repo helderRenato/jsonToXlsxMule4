@@ -44,6 +44,9 @@
 						<!-- Start: SECURED PROPERTIES CI/CD -->
 						<properties>
 							<secure.key>${decryption.key}</secure.key>
+							 <!-- Start: NON-SECURED PROPERTIES -->
+				            <env>${envProperty}</env>
+				            <!-- End: NON-SECURED PROPERTIES -->
 						</properties>
 						<!-- End: SECURED PROPERTIES CI/CD -->
 					</cloudHubDeployment>
