@@ -104,7 +104,7 @@ jobs:
            -Denviroment="Sandbox"
   deploy-dev:
     needs: build-dev
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout this repo
