@@ -61,7 +61,7 @@ jobs:
           KEY: ${{ secrets.decription_key }}
         run: |
           artifactName=$(ls *.jar | head -1)
-          mvn deploy -DmuleDeploy \
+          mvn -X deploy -DmuleDeploy \
            -Dmule.artifact=$artifactName \
            -Danypoint.username="$USERNAME" \
            -Danypoint.password="$PASSWORD" \
