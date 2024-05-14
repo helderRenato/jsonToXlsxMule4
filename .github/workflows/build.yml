@@ -2,6 +2,7 @@ name: Build and Deploy to Sandbox
 
 on:
   push:
+  pull_request:
 
 jobs:
   #DEPLOY FOR THE MAIN BRANCH
@@ -102,6 +103,7 @@ jobs:
            -Ddecryption.key="$KEY" \
            -Denv="dev" \
            -Denviroment="Sandbox"
+
   deploy-dev:
     needs: build-dev
     if: github.ref == 'refs/heads/dev'
