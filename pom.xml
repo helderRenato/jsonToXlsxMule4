@@ -35,7 +35,7 @@
 						<muleVersion>4.6-java8</muleVersion>
 						<username>${anypoint.username}</username>
 						<password>${anypoint.password}</password>
-						<applicationName>${app.name}</applicationName>
+						<applicationName>xlsxl-email</applicationName>
 						<environment>${env}</environment>
 						<workerType>MICRO</workerType>
 						<region>us-east-2</region>
