@@ -36,7 +36,7 @@
 						<username>${anypoint.username}</username>
 						<password>${anypoint.password}</password>
 						<applicationName>${project.name}</applicationName>
-						<environment>${env}</environment>
+						<environment>${environment}</environment>
 						<workerType>MICRO</workerType>
 						<region>us-east-2</region>
 						<workers>1</workers>
@@ -45,7 +45,7 @@
 						<properties>
 							<secure.key>${decryption.key}</secure.key>
 							 <!-- Start: NON-SECURED PROPERTIES -->
-				            <env>${envProperty}</env>
+				            <env>${env}</env>
 				            <!-- End: NON-SECURED PROPERTIES -->
 						</properties>
 						<!-- End: SECURED PROPERTIES CI/CD -->

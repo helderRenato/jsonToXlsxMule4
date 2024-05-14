@@ -70,7 +70,7 @@ jobs:
           name: artifacts
           path: target/*.jar
 
-  deploy:
+  deploy-main:
     needs: build-main
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -93,8 +93,6 @@ jobs:
           USERNAME: ${{ secrets.anypoint_platform_username }}
           PASSWORD: ${{ secrets.anypoint_platform_password }}
           KEY: ${{ secrets.decryption_key }}
-          #VARIABLES
-          ENVPROPERTY: ${{ vars.ENV }}
         run: |
           artifactName=$(ls *.jar | head -1)
           mvn -X deploy -DmuleDeploy \
@@ -102,5 +100,38 @@ jobs:
            -Danypoint.username="$USERNAME" \
            -Danypoint.password="$PASSWORD" \
            -Ddecryption.key="$KEY" \
-           -Denv="Sandbox" \
-           -DenvProperty="$ENVPROPERTY"
+           -Denv="dev" \
+           -Denviroment="Sandbox"
+  deploy-dev:
+    needs: build-dev
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+      - name: Deploy to Sandbox
+        env:
+          #SECRETS
+          USERNAME: ${{ secrets.anypoint_platform_username }}
+          PASSWORD: ${{ secrets.anypoint_platform_password }}
+          KEY: ${{ secrets.decryption_key }}
+
+        run: |
+          artifactName=$(ls *.jar | head -1)
+          mvn -X deploy -DmuleDeploy \
+           -Dmule.artifact=$artifactName \
+           -Danypoint.username="$USERNAME" \
+           -Danypoint.password="$PASSWORD" \
+           -Ddecryption.key="$KEY" \
+           -Denv="dev" \
+           -Denvironment="Sandbox"
