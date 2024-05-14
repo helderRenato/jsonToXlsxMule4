@@ -92,6 +92,7 @@ jobs:
           USERNAME: ${{ secrets.anypoint_platform_username }}
           PASSWORD: ${{ secrets.anypoint_platform_password }}
           KEY: ${{ secrets.decryption_key }}
+
         run: |
           artifactName=$(ls *.jar | head -1)
           mvn -X deploy -DmuleDeploy \
@@ -100,7 +101,7 @@ jobs:
            -Danypoint.password="$PASSWORD" \
            -Ddecryption.key="$KEY" \
            -Denv="dev" \
-           -Denviroment="Sandbox"
+           -Denvironment="Sandbox"
 
   deploy-dev:
     needs: build-dev
